@@ -53,6 +53,23 @@ export function SearchBar({
   const artistRef = useRef<HTMLInputElement>(null)
   useTypingPlaceholders(titleRef, artistRef, EXAMPLES)
 
+  // Discovery: the dial moves its own value while dragging and tells the app
+  // only on release (the native "change" event), so the page and its result
+  // cards don't re-render on every pixel of the drag.
+  const [dial, setDial] = useState(discovery)
+  const [synced, setSynced] = useState(discovery)
+  if (discovery !== synced) { setSynced(discovery); setDial(discovery) }   // app changed it (URL, new search)
+  const dialRef = useRef<HTMLInputElement>(null)
+  const commitDiscovery = useRef(onDiscoveryChange)
+  useEffect(() => { commitDiscovery.current = onDiscoveryChange })
+  useEffect(() => {
+    const el = dialRef.current
+    if (!el) return
+    const commit = () => commitDiscovery.current(Number(el.value))
+    el.addEventListener('change', commit)
+    return () => el.removeEventListener('change', commit)
+  }, [])
+
   const query = `${title} ${artist}`.trim()
   const { items } = useSearchSuggestions(open ? query : '')
 
@@ -219,14 +236,15 @@ export function SearchBar({
             type="range"
             min={0}
             max={1}
-            step={0.05}
-            value={discovery}
-            onChange={(e) => onDiscoveryChange(Number(e.target.value))}
+            step={0.01}
+            ref={dialRef}
+            value={dial}
+            onChange={(e) => setDial(Number(e.target.value))}
             className="range-slider flex-1 max-w-xs"
-            style={{ '--fill': `${discovery * 100}%` } as React.CSSProperties}
-            aria-valuetext={discoveryLabel(discovery)}
+            style={{ '--fill': `${dial * 100}%` } as React.CSSProperties}
+            aria-valuetext={discoveryLabel(dial)}
           />
-          <span className="text-sm text-text-primary w-24">{discoveryLabel(discovery)}</span>
+          <span className="text-sm text-text-primary w-24">{discoveryLabel(dial)}</span>
           <AnimatePresence>
             {onRerun && (
               <motion.button
