@@ -86,15 +86,18 @@ export function RecommendationCard({ rec, rank, onClick }: RecommendationCardPro
               <h3 className="text-text-primary font-semibold text-base leading-snug break-words">
                 {/* The title is the card's real button; its ::after stretches over the
                     whole card so a click anywhere opens details, while the cover and
-                    streaming links (z-10) keep their own clicks. */}
-                <button
-                  type="button"
-                  onClick={onClick}
-                  aria-haspopup="dialog"
-                  className="text-left focus-visible:outline-none after:absolute after:inset-0 after:rounded-2xl focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-[var(--color-accent)]"
-                >
-                  {track.title}
-                </button>
+                    streaming links (z-10) keep their own clicks. Without a details
+                    view (the How it works example) it's plain text. */}
+                {onClick ? (
+                  <button
+                    type="button"
+                    onClick={onClick}
+                    aria-haspopup="dialog"
+                    className="text-left focus-visible:outline-none after:absolute after:inset-0 after:rounded-2xl focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-[var(--color-accent)]"
+                  >
+                    {track.title}
+                  </button>
+                ) : track.title}
               </h3>
               <p className="text-text-secondary text-sm mt-0.5 truncate">{track.artist}</p>
             </div>
