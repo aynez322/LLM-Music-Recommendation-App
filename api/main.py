@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -13,7 +14,7 @@ from fastapi.responses import RedirectResponse  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from sse_starlette.sse import EventSourceResponse  # noqa: E402
 
-from api import audio, http  # noqa: E402
+from api import audio, http, prewarm  # noqa: E402
 from api.models import RecommendRequest  # noqa: E402
 from api.recommender import recommend as run_recommender  # noqa: E402
 from api.sources import deezer, lastfm  # noqa: E402
@@ -24,7 +25,11 @@ logging.basicConfig(level=logging.INFO)
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     audio.warm_up()
+    # trending songs get searched in the background, so they're instant
+    task = asyncio.create_task(prewarm.run_forever()) if prewarm.enabled() else None
     yield
+    if task:
+        task.cancel()
     await http.close()
 
 
@@ -40,7 +45,10 @@ app.add_middleware(
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "audio_model": audio.available(), "lastfm": lastfm.enabled()}
+    return {
+        "status": "ok", "audio_model": audio.available(), "lastfm": lastfm.enabled(),
+        "trending_cache": prewarm.status if prewarm.enabled() else "off",
+    }
 
 
 @app.get("/api/search")
@@ -70,8 +78,10 @@ async def preview(deezer_id: int):
 @app.post("/api/recommend")
 async def recommend(req: RecommendRequest):
     async def stream():
-        async for event in run_recommender(req):
-            yield {"data": json.dumps(event)}
+        # the trending pre-warm waits while a real search runs
+        with prewarm.user_search():
+            async for event in run_recommender(req):
+                yield {"data": json.dumps(event)}
 
     return EventSourceResponse(stream())
 
