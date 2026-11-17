@@ -35,6 +35,35 @@ function BookIcon() {
   )
 }
 
+// The label beside an icon: a second way to click the same link. It sits
+// outside the DockIcon (the dock only magnifies DockIcons), hugs its own icon
+// (-ml-1) and keeps a gap before the next one (mr-2). Screen readers already
+// get the name from the icon, so it is hidden from them; on phones the dock
+// would be too wide with text, so there it is icons only.
+const labelClass = 'hidden sm:block -ml-1 mr-2 text-sm font-medium hover:text-accent transition-colors whitespace-nowrap'
+
+function Label({ href, active, onNavigate, external, children }: {
+  href: string; active?: boolean; onNavigate?: () => void; external?: boolean; children: ReactNode
+}) {
+  function onClick(e: MouseEvent<HTMLAnchorElement>) {
+    if (!onNavigate || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
+    e.preventDefault()
+    onNavigate()
+  }
+  return (
+    <a
+      href={href}
+      onClick={onClick}
+      tabIndex={-1}
+      aria-hidden
+      {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+      className={`${labelClass} ${active ? 'text-text-primary' : 'text-text-secondary'}`}
+    >
+      {children}
+    </a>
+  )
+}
+
 /** Same-page link: a real <a> (new tab, copy link) that navigates in place on a plain click. */
 function PageLink({ href, label, active, onNavigate, children }: {
   href: string; label: string; active: boolean; onNavigate: () => void; children: ReactNode
@@ -69,21 +98,25 @@ export function NavDock({ page, onHome, onHowItWorks, theme, onToggleTheme }: Na
             <HomeIcon />
           </PageLink>
         </DockIcon>
+        <Label href={HOME_PATH} active={page === 'home'} onNavigate={onHome}>Home</Label>
         <DockIcon className="relative">
           <PageLink href={HOW_PATH} label="How it works" active={page === 'how'} onNavigate={onHowItWorks}>
             <BookIcon />
           </PageLink>
         </DockIcon>
+        <Label href={HOW_PATH} active={page === 'how'} onNavigate={onHowItWorks}>How it works</Label>
 
         <div aria-hidden className="w-px self-stretch my-1.5 bg-[var(--color-border)]" />
 
-        {PROFILES.map(({ name, href, path }) => (
+        {/* a flat list, not Fragments: the dock only magnifies its direct DockIcon children */}
+        {PROFILES.flatMap(({ name, href, path }) => [
           <DockIcon key={name} className="relative">
             <a href={href} target="_blank" rel="noopener noreferrer" aria-label={name} title={name} className={item}>
               <svg viewBox="0 0 24 24" fill="currentColor" className="size-[46%]" aria-hidden><path d={path} /></svg>
             </a>
-          </DockIcon>
-        ))}
+          </DockIcon>,
+          <Label key={`${name}-label`} href={href} external>{name}</Label>,
+        ])}
         <DockIcon className="relative">
           <button
             type="button"
