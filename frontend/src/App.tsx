@@ -18,6 +18,7 @@ import { NavDock } from './components/layout/NavDock'
 import { HowItWorksPage } from './pages/HowItWorksPage'
 import { ErrorBanner } from './components/ui/ErrorBanner'
 import { scrollBehavior } from './lib/media'
+import { EASE_OUT } from './lib/motion'
 import {
   DEFAULT_DISCOVERY, pageFromPath, pushHome, pushPage, pushQuery, readQuery, replaceHome, replaceQuery,
   type Page, type SearchQuery,
@@ -225,8 +226,8 @@ export default function App() {
             key="hero"
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -14, transition: { duration: 0.12 } }}
-            transition={{ duration: 0.4, ease: 'easeOut' }}
+            exit={{ opacity: 0, y: -14, transition: { duration: 0.12, ease: EASE_OUT } }}
+            transition={{ duration: 0.4, ease: EASE_OUT }}
             className="text-center mb-10 mt-2"
           >
             <div className="flex items-center justify-center gap-2.5 mb-8">
@@ -258,7 +259,7 @@ export default function App() {
       <motion.div
         ref={searchRef}
         layout="position"
-        transition={{ layout: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } }}
+        transition={{ layout: { duration: 0.35, ease: EASE_OUT } }}
         className={showHome ? 'max-w-2xl mx-auto' : 'mb-6'}
       >
         <SearchBar
@@ -296,10 +297,10 @@ export default function App() {
         {showHome && (
           <motion.div
             key="home"
-            initial={{ opacity: 0 }}
+            // no entrance of its own: the cards inside come in as a wave
+            initial={false}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0, transition: { duration: 0.15 } }}
-            transition={{ duration: 0.4, delay: 0.1 }}
+            exit={{ opacity: 0, transition: { duration: 0.12, ease: EASE_OUT } }}
           >
             <TopTracksCarousel onSelect={recommendFromTrack} />
           </motion.div>
@@ -312,9 +313,12 @@ export default function App() {
           <motion.div
             key="results"
             // wait for the search bar to mostly arrive, so it never slides over them
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: 0.3, ease: 'easeOut' }}
+            // straight away, while the search box glides up: a pause here,
+            // right after the click, reads as lag. Fade only: the seed card
+            // inside brings its own rise when the song is found.
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, ease: EASE_OUT }}
             className="space-y-6"
           >
             {finished && stream.seed ? (
@@ -349,12 +353,12 @@ export default function App() {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.4, delay: 0.3 }}
+                transition={{ duration: 0.3, delay: 0.3, ease: EASE_OUT }}
                 className="flex justify-center py-6"
               >
                 <button
                   onClick={handleReset}
-                  className="group flex items-center gap-2.5 px-7 py-3 rounded-xl border border-[var(--color-border)] hover:border-accent text-text-secondary hover:text-accent transition-all duration-200 text-sm font-medium"
+                  className="group flex items-center gap-2.5 px-7 py-3 rounded-xl border border-[var(--color-border)] hover:border-accent text-text-secondary hover:text-accent transition-colors duration-200 text-sm font-medium"
                 >
                   <span className="text-base group-hover:-rotate-180 transition-transform duration-300 inline-block">↺</span>
                   Start over

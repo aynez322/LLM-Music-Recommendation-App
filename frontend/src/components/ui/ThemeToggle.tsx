@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
+import { EASE_OUT } from '../../lib/motion'
 
 interface ThemeToggleProps {
   theme: 'dark' | 'light'
@@ -45,7 +46,7 @@ export function ThemeToggle({ theme, onToggle }: ThemeToggleProps) {
           initial={{ opacity: 0, rotate: -30, scale: 0.6 }}
           animate={{ opacity: 1, rotate: 0,   scale: 1   }}
           exit={{    opacity: 0, rotate:  30, scale: 0.6 }}
-          transition={{ duration: 0.18, ease: 'easeOut' }}
+          transition={{ duration: 0.18, ease: EASE_OUT }}
           className="flex items-center justify-center"
         >
           {isLight ? <MoonIcon /> : <SunIcon />}

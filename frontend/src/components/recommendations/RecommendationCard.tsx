@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { EASE_OUT } from '../../lib/motion'
 import type { Reason, ReasonKind, Recommendation } from '../../types/music'
 import { CoverPlayButton } from '../ui/CoverPlayButton'
 import { StreamingLinks } from '../ui/StreamingLinks'
@@ -57,7 +58,7 @@ function MatchBar({ score }: { score: number }) {
           className="h-full rounded-full bg-gradient-to-r from-accent to-cyan"
           initial={{ width: 0 }}
           animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.65, ease: 'easeOut' }}
+          transition={{ duration: 0.65, ease: EASE_OUT }}
         />
       </div>
     </div>

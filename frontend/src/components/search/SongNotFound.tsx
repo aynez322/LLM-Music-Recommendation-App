@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { EASE_OUT } from '../../lib/motion'
 import type { Track } from '../../types/music'
 
 interface SongNotFoundProps {
@@ -16,7 +17,7 @@ export function SongNotFound({ title, artist, message, suggestions, onDismiss, o
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 8, transition: { duration: 0.15 } }}
-      transition={{ duration: 0.35, ease: 'easeOut' }}
+      transition={{ duration: 0.35, ease: EASE_OUT }}
       className="max-w-2xl mx-auto mt-6 rounded-2xl border border-[var(--color-border)] bg-bg-surface overflow-hidden"
       style={{ boxShadow: '0 4px 32px rgba(212,105,42,0.08)' }}
     >

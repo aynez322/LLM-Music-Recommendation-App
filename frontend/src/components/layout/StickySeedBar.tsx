@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
+import { EASE_OUT } from '../../lib/motion'
 import type { Track } from '../../types/music'
 
 interface StickySeedBarProps {
@@ -19,7 +20,7 @@ export function StickySeedBar({ seed, visible, onNewSearch, onHome }: StickySeed
           key="sticky-seed"
           initial={{ y: '-100%' }}
           animate={{ y: 0, transition: { type: 'spring', damping: 32, stiffness: 320 } }}
-          exit={{ y: '-100%', transition: { duration: 0.15, ease: 'easeIn' } }}
+          exit={{ y: '-100%', transition: { duration: 0.15, ease: EASE_OUT } }}
           className="fixed inset-x-0 top-0 z-30 border-b border-[var(--color-border)] bg-bg-surface/90 backdrop-blur-md"
         >
 <div className="max-w-5xl mx-auto px-4 py-2 flex items-center gap-3">

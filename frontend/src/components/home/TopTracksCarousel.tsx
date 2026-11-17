@@ -2,11 +2,17 @@ import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useTopTracks } from '../../hooks/useTopTracks'
 import { scrollBehavior } from '../../lib/media'
+import { EASE_OUT, waveDelays } from '../../lib/motion'
 import type { Track } from '../../types/music'
 
 interface TopTracksCarouselProps {
   onSelect: (track: Track) => void
 }
+
+// Entrance: only the cards that fit on screen come in, as one wave with
+// shrinking gaps; the rest are simply there when you scroll to them.
+const VISIBLE = 6
+const CARD_DELAYS = waveDelays(VISIBLE, 0.18)
 
 /* ── individual card ──────────────────────────────────────────── */
 function TrackCard({ track, index, onClick }: {
@@ -16,11 +22,11 @@ function TrackCard({ track, index, onClick }: {
 }) {
   return (
     <motion.button
-      initial={{ opacity: 0, y: 16 }}
+      initial={index < VISIBLE ? { opacity: 0, y: 12 } : false}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay: Math.min(index * 0.045, 0.6), ease: 'easeOut' }}
+      transition={{ duration: 0.4, delay: CARD_DELAYS[index] ?? 0, ease: EASE_OUT }}
       whileHover={{ y: -6, scale: 1.025 }}
-      whileTap={{ scale: 0.96 }}
+      whileTap={{ scale: 0.97 }}
       onClick={onClick}
       className="group relative flex-shrink-0 snap-start w-40 rounded-2xl p-4 text-left overflow-hidden cursor-pointer border border-[var(--color-border)] bg-bg-surface hover:border-accent/60 transition-colors duration-200"
       style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.35)' }}
@@ -91,12 +97,12 @@ function Skeleton() {
 function NavBtn({ dir, onClick }: { dir: 'left' | 'right'; onClick: () => void }) {
   return (
     <motion.button
-      initial={{ opacity: 0, scale: 0.8 }}
+      // appears from 95%, never from tiny; hover is a colour change only
+      initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.8 }}
-      transition={{ duration: 0.15 }}
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.92 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.15, ease: EASE_OUT }}
+      whileTap={{ scale: 0.97 }}
       onClick={onClick}
       aria-label={dir === 'left' ? 'Scroll back' : 'Scroll forward'}
       className={`touch:hidden absolute top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-bg-raised border border-[var(--color-border)] hover:border-accent flex items-center justify-center text-accent text-lg font-light transition-colors shadow-lg ${dir === 'left' ? 'left-1 lg:-left-4' : 'right-1 lg:-right-4'}`}
