@@ -12,8 +12,6 @@ interface NavDockProps {
   onToggleTheme: () => void
 }
 
-const github = PROFILES.find(p => p.name === 'GitHub')
-
 // one look for every item. The dock pads each icon with an inline style, so
 // items cover the whole circle absolutely: all of it is the click target.
 const item = 'absolute inset-0 flex items-center justify-center rounded-full text-text-secondary hover:text-accent hover:bg-bg-raised focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent transition-colors'
@@ -79,13 +77,13 @@ export function NavDock({ page, onHome, onHowItWorks, theme, onToggleTheme }: Na
 
         <div aria-hidden className="w-px self-stretch my-1.5 bg-[var(--color-border)]" />
 
-        {github && (
-          <DockIcon className="relative">
-            <a href={github.href} target="_blank" rel="noopener noreferrer" aria-label="GitHub" title="GitHub" className={item}>
-              <svg viewBox="0 0 24 24" fill="currentColor" className="size-[46%]" aria-hidden><path d={github.path} /></svg>
+        {PROFILES.map(({ name, href, path }) => (
+          <DockIcon key={name} className="relative">
+            <a href={href} target="_blank" rel="noopener noreferrer" aria-label={name} title={name} className={item}>
+              <svg viewBox="0 0 24 24" fill="currentColor" className="size-[46%]" aria-hidden><path d={path} /></svg>
             </a>
           </DockIcon>
-        )}
+        ))}
         <DockIcon className="relative">
           <button
             type="button"

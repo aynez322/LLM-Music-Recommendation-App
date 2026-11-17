@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { PROFILES } from '../../lib/profiles'
 
 function Credit({ href, children }: { href: string; children: ReactNode }) {
   return (
@@ -11,34 +10,6 @@ function Credit({ href, children }: { href: string; children: ReactNode }) {
     >
       {children}
     </a>
-  )
-}
-
-function ProfileLinks() {
-  return (
-    <ul className="flex items-center gap-1 -ml-2 sm:ml-auto sm:-mr-2 flex-shrink-0">
-      {PROFILES.map(({ name, href, path }) => {
-        const icon = (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-            <path d={path} />
-          </svg>
-        )
-        return (
-          <li key={name}>
-            <a
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={name}
-              title={name}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-text-secondary hover:text-accent hover:bg-bg-raised transition-colors"
-            >
-              {icon}
-            </a>
-          </li>
-        )
-      })}
-    </ul>
   )
 }
 
@@ -58,7 +29,6 @@ export function Footer() {
           from <Credit href="https://www.deezer.com">Deezer</Credit>, and sound matching by the{' '}
           <Credit href="https://huggingface.co/laion/clap-htsat-unfused">CLAP</Credit> audio model.
         </p>
-        <ProfileLinks />
       </div>
     </footer>
   )

@@ -1,4 +1,4 @@
-// Your public profiles: shown in the footer (and GitHub in the navbar).
+// Your public profiles: shown in the navbar, in this order.
 export interface Profile { name: string; href: string; path: string }
 
 export const PROFILES: Profile[] = [
