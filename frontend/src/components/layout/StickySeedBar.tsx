@@ -22,9 +22,7 @@ export function StickySeedBar({ seed, visible, onNewSearch, onHome }: StickySeed
           exit={{ y: '-100%', transition: { duration: 0.15, ease: 'easeIn' } }}
           className="fixed inset-x-0 top-0 z-30 border-b border-[var(--color-border)] bg-bg-surface/90 backdrop-blur-md"
         >
-          {/* right padding keeps clear of the fixed theme toggle until the
-              centred column is narrow enough to leave room for it */}
-          <div className="max-w-5xl mx-auto px-4 sm:pr-16 min-[1160px]:pr-4 py-2 flex items-center gap-3">
+<div className="max-w-5xl mx-auto px-4 py-2 flex items-center gap-3">
             {seed.cover
               ? <img src={seed.cover} alt="" className="w-9 h-9 rounded-md object-cover flex-shrink-0" />
               : <span className="w-9 h-9 rounded-md bg-bg-raised flex-shrink-0" />}

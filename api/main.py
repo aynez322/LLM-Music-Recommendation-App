@@ -111,5 +111,17 @@ async def track_info(title: str, artist: str):
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
 _FRONTEND_DIST = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
+# the app's own pages: the client picks the page from the URL, so each one
+# gets index.html (a reload or shared link would 404 otherwise)
+_SPA_PAGES = ("/how-it-works", "/how-it-works/")
+
 if os.path.isdir(_FRONTEND_DIST):
+    from fastapi.responses import FileResponse  # noqa: E402
+
+    def _spa_page() -> FileResponse:
+        return FileResponse(os.path.join(_FRONTEND_DIST, "index.html"))
+
+    for _path in _SPA_PAGES:
+        app.add_api_route(_path, _spa_page, methods=["GET"], include_in_schema=False)
+
     app.mount("/", StaticFiles(directory=_FRONTEND_DIST, html=True), name="frontend")

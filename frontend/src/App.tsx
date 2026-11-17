@@ -14,12 +14,13 @@ import { MiniPlayer } from './components/player/MiniPlayer'
 import { LoaderVinyl } from './components/aceternity/loader'
 import { useTheme } from './hooks/useTheme'
 import { TopTracksCarousel } from './components/home/TopTracksCarousel'
-import { HowItWorks } from './components/home/HowItWorks'
-import { ThemeToggle } from './components/ui/ThemeToggle'
+import { NavDock } from './components/layout/NavDock'
+import { HowItWorksPage } from './pages/HowItWorksPage'
 import { ErrorBanner } from './components/ui/ErrorBanner'
 import { scrollBehavior } from './lib/media'
 import {
-  DEFAULT_DISCOVERY, pushHome, pushQuery, readQuery, replaceHome, replaceQuery, type SearchQuery,
+  DEFAULT_DISCOVERY, pageFromPath, pushHome, pushPage, pushQuery, readQuery, replaceHome, replaceQuery,
+  type Page, type SearchQuery,
 } from './lib/urlState'
 import type { Track } from './types/music'
 
@@ -46,7 +47,7 @@ export default function App() {
   const [formDefaults, setFormDefaults] = useState({ title: '', artist: '' })
   const [searchOutOfView, setSearchOutOfView] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
-
+  const [page, setPage] = useState<Page>(pageFromPath)
 
   // next/previous in the player walk the seed song, then the recommendations
   useEffect(() => {
@@ -79,7 +80,6 @@ export default function App() {
         onSeed: (seed) => {
           // typed text resolved to an exact track: link to that from now on
           replaceQuery({ deezerId: seed.deezer_id, discovery: q.discovery })
-          document.title = `Similar to ${seed.title} | ${APP_TITLE}`
           setLastQuery({ title: seed.title, artist: seed.artist, discovery: q.discovery })
           if (fromUrl) {
             setFormDefaults({ title: seed.title, artist: seed.artist })
@@ -109,7 +109,6 @@ export default function App() {
     setLastQuery(null)
     setFormDefaults({ title: '', artist: '' })
     setSearchKey(k => k + 1)
-    document.title = APP_TITLE
     if (history === 'push') pushHome()
     if (history === 'replace') replaceHome()
     // "Start over" sits at the bottom of a long list; home starts at the top
@@ -126,6 +125,23 @@ export default function App() {
     goHome('replace')
   }
 
+  // navbar: Home is the same as the other Home buttons; How it works keeps
+  // whatever search is on the home page, so Back returns straight to it
+  function navHome() {
+    goHome('push')
+    setPage('home')
+  }
+
+  function navHowItWorks() {
+    if (page !== 'how') { pushPage('how'); setPage('how') }
+    window.scrollTo({ top: 0, behavior: 'auto' })
+  }
+
+  function startFromHowItWorks() {
+    navHome()
+    window.setTimeout(focusSearch, 50)   // once the home page is showing again
+  }
+
   function focusSearch() {
     window.scrollTo({ top: 0, behavior: scrollBehavior() })
     const input = document.getElementById('song-title') as HTMLInputElement | null
@@ -138,9 +154,16 @@ export default function App() {
   const followUrl = useRef(() => {})
   useEffect(() => {
     followUrl.current = () => {
+      const p = pageFromPath()
+      setPage(p)
+      if (p === 'how') return              // the home page keeps its search meanwhile
       const q = readQuery()
+      // Back from How it works to the results already on screen: nothing to redo
+      const showing = !!q && !!stream.seed && q.deezerId === stream.seed.deezer_id
+        && Math.abs(q.discovery - (lastQuery?.discovery ?? -1)) < 0.001
+      if (showing) return
       if (q) run(q, 'none', true)
-      else goHome('none')
+      else if (started) goHome('none')
     }
   })
   useEffect(() => {
@@ -149,6 +172,13 @@ export default function App() {
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
   }, [])
+
+  // tab title follows the page and the song the results are for
+  useEffect(() => {
+    document.title = page === 'how'
+      ? `How it works | ${APP_TITLE}`
+      : stream.seed ? `Similar to ${stream.seed.title} | ${APP_TITLE}` : APP_TITLE
+  }, [page, stream.seed])
 
   // the sticky bar takes over once the full search form scrolls away
   useEffect(() => {
@@ -161,7 +191,6 @@ export default function App() {
 
   return (
     <AppShell
-      themeToggle={<ThemeToggle theme={theme} onToggle={toggleTheme} />}
       // the player is sticky, not fixed: it rides along at the bottom of the
       // screen, then parks above the footer at the end of the page
       footer={<>
@@ -170,7 +199,15 @@ export default function App() {
       </>}
     >
 
-      <StickySeedBar seed={stream.seed} visible={started && searchOutOfView} onNewSearch={focusSearch} onHome={handleReset} />
+      <NavDock page={page} onHome={navHome} onHowItWorks={navHowItWorks} theme={theme} onToggleTheme={toggleTheme} />
+
+      <StickySeedBar seed={stream.seed} visible={page === 'home' && started && searchOutOfView} onNewSearch={focusSearch} onHome={handleReset} />
+
+      {page === 'how' && <HowItWorksPage onStart={startFromHowItWorks} />}
+
+      {/* the home page stays mounted while How it works shows, so coming back
+          is instant and any results are still there */}
+      <div hidden={page !== 'home'}>
 
       {/* ── Hero ─────────────────────────────────────────── */}
       {/* popLayout takes the leaving hero out of the flow at once, so the
@@ -184,7 +221,7 @@ export default function App() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -14, transition: { duration: 0.12 } }}
             transition={{ duration: 0.4, ease: 'easeOut' }}
-            className="text-center mb-10 mt-10"
+            className="text-center mb-10 mt-2"
           >
             <div className="flex items-center justify-center gap-2.5 mb-8">
               <img
@@ -259,7 +296,6 @@ export default function App() {
             transition={{ duration: 0.4, delay: 0.1 }}
           >
             <TopTracksCarousel onSelect={recommendFromTrack} />
-            <HowItWorks />
           </motion.div>
         )}
       </AnimatePresence>
@@ -322,7 +358,7 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
-
+      </div>
 
     </AppShell>
   )

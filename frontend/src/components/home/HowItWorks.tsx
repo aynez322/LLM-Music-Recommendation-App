@@ -18,19 +18,22 @@ const steps = [
   },
 ]
 
-export function HowItWorks() {
+/** The three steps. `title` shows the section's own heading (off when the page has one). */
+export function HowItWorks({ title = true }: { title?: boolean }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, delay: 0.18, ease: 'easeOut' }}
-      className="mt-10"
+      className={title ? 'mt-10' : ''}
     >
-      <div className="flex items-baseline justify-between mb-4 px-1">
-        <h2 className="font-display text-text-primary text-xl">
-          How it works
-        </h2>
-      </div>
+      {title && (
+        <div className="flex items-baseline justify-between mb-4 px-1">
+          <h2 className="font-display text-text-primary text-xl">
+            How it works
+          </h2>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {steps.map(step => (
