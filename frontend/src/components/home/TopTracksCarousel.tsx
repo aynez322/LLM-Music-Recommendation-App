@@ -159,11 +159,13 @@ export function TopTracksCarousel({ onSelect }: TopTracksCarouselProps) {
           {canNext && <NavBtn dir="right" onClick={() => scroll('right')} key="next" />}
         </AnimatePresence>
 
-        {/* track list */}
+        {/* track list: 16px of room at the sides (offset by the negative margin)
+            so the first and last cards can lift and grow on hover without
+            the scroll area cutting their border */}
         <div
           ref={scrollRef}
           onScroll={updateEdges}
-          className="flex gap-3 overflow-x-auto overscroll-x-contain snap-x snap-mandatory px-4 scroll-px-4 sm:px-0 sm:scroll-px-0 pt-4 pb-6 -mt-2 -mb-3"
+          className="flex gap-3 overflow-x-auto overscroll-x-contain snap-x snap-mandatory px-4 scroll-px-4 sm:-mx-4 pt-4 pb-6 -mt-2 -mb-3"
           style={{
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
