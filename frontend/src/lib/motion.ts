@@ -3,6 +3,9 @@
 /** Strong ease-out: starts fast, so things feel responsive. For entrances. */
 export const EASE_OUT = [0.23, 1, 0.32, 1] as const
 
+/** iOS-like sheet curve: for drawers and sheets sliding off screen. */
+export const EASE_DRAWER = [0.32, 0.72, 0, 1] as const
+
 /** Spread `n` stagger delays over `total` seconds with shrinking gaps, so a
  *  group reads as one wave instead of a metronome. */
 export function waveDelays(n: number, total: number): number[] {

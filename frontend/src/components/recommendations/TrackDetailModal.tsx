@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useDragControls, type PanInfo } from 'framer-motion'
+import { EASE_DRAWER, EASE_OUT } from '../../lib/motion'
 import type { Recommendation } from '../../types/music'
 import { useTrackInfo } from '../../hooks/useTrackInfo'
 import { useDialog } from '../../hooks/useDialog'
@@ -36,24 +37,25 @@ function Stat({ label, value }: { label: string; value: string }) {
 const SHEET = {
   initial: { y: '100%' },
   animate: { y: 0, transition: { type: 'spring' as const, damping: 34, stiffness: 340 } },
-  exit:    { y: '100%', transition: { duration: 0.22, ease: 'easeIn' as const } },
+  // leaving: ease-out (the drawer curve) and quicker than the way in
+  exit:    { y: '100%', transition: { duration: 0.2, ease: EASE_DRAWER } },
 }
 // No scale/slide here: the cover flies in from its card (shared layoutId),
 // and a moving panel would make it land off-target.
 const CARD = {
   initial: { opacity: 0 },
   animate: { opacity: 1, transition: { duration: 0.2 } },
-  exit:    { opacity: 0, transition: { duration: 0.2 } },
+  exit:    { opacity: 0, transition: { duration: 0.15, ease: EASE_OUT } },
 }
 
 // next/previous track slides in from the side it was swiped towards.
 // dir 0 = not browsing (dialog closing): fade only, so the cover can fly home.
 const SLIDE = {
   enter:  (dir: number) => ({ x: dir * 48, opacity: 0 }),
-  center: { x: 0, opacity: 1, transition: { duration: 0.18, ease: 'easeOut' as const } },
+  center: { x: 0, opacity: 1, transition: { duration: 0.18, ease: EASE_OUT } },
   exit:   (dir: number) => dir === 0
     ? { opacity: 0, transition: { duration: 0.15 } }
-    : { x: dir * -48, opacity: 0, transition: { duration: 0.12, ease: 'easeIn' as const } },
+    : { x: dir * -48, opacity: 0, transition: { duration: 0.12, ease: EASE_OUT } },
 }
 
 export function TrackDetailModal({ recs, index, originIndex = null, onIndexChange, onClose }: TrackDetailModalProps) {

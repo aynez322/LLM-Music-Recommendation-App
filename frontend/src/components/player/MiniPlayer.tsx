@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
+import { EASE_OUT } from '../../lib/motion'
 import {
   seek, setVolume, step, stopPreview, toggleMute, togglePreview, usePlayer, usePreviewTime,
 } from '../../hooks/usePreviewPlayer'
@@ -111,7 +112,7 @@ export function MiniPlayer() {
           aria-label="Preview player"
           initial={{ y: '100%' }}
           animate={{ y: 0, transition: { type: 'spring', damping: 30, stiffness: 300 } }}
-          exit={{ y: '100%', transition: { duration: 0.2, ease: 'easeIn' } }}
+          exit={{ y: '100%', transition: { duration: 0.2, ease: EASE_OUT } }}
           className="sticky bottom-0 z-40 border-t border-[var(--color-border)] bg-bg-surface/90 backdrop-blur-md"
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >

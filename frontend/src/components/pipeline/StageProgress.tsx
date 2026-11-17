@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { EASE_OUT } from '../../lib/motion'
 import type { StageState, StageStatus } from '../../types/music'
 import { Spinner } from '../ui/Spinner'
 
@@ -16,7 +17,7 @@ function StatusIcon({ status }: { status: StageStatus }) {
           strokeLinejoin="round"
           initial={{ pathLength: 0 }}
           animate={{ pathLength: 1 }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
+          transition={{ duration: 0.4, ease: EASE_OUT }}
         />
       </svg>
     )
@@ -34,10 +35,10 @@ function StageList({ stages }: { stages: StageState[] }) {
             <AnimatePresence mode="wait">
               <motion.div
                 key={stage.status}
-                initial={{ scale: 0.5, opacity: 0 }}
+                initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.5, opacity: 0 }}
-                transition={{ duration: 0.15 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                transition={{ duration: 0.15, ease: EASE_OUT }}
               >
                 <StatusIcon status={stage.status} />
               </motion.div>
@@ -61,7 +62,7 @@ export function StageProgress({ stages }: { stages: StageState[] }) {
     <motion.div
       initial={{ x: 16, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
+      transition={{ duration: 0.3, ease: EASE_OUT }}
       className="bg-bg-surface border border-[var(--color-border)] rounded-2xl p-5 card-glow h-full"
       aria-live="polite"
       aria-label="Progress"
@@ -100,7 +101,7 @@ export function StageSummary({ stages }: { stages: StageState[] }) {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
+            transition={{ duration: 0.2, ease: EASE_OUT }}
             className="overflow-hidden"
           >
             <div className="pt-4">

@@ -5,8 +5,10 @@ import type { Recommendation } from '../../types/music'
 import { RecommendationCard } from './RecommendationCard'
 import { TrackDetailModal } from './TrackDetailModal'
 
-// ms between cards: ten cards land in about a second and a half
-const REVEAL_DELAY = 150
+// ms after card i before the next one: shrinking gaps, so the top five land
+// as one wave (0, 60, 100, 130, 150ms) and the rest arrive with the fifth
+const REVEAL_GAPS = [60, 40, 30, 20]
+const revealGap = (i: number) => REVEAL_GAPS[i] ?? 0
 
 export function RecommendationList({ recommendations }: { recommendations: Recommendation[] }) {
   const [selected, setSelected] = useState<number | null>(null)
@@ -21,7 +23,7 @@ export function RecommendationList({ recommendations }: { recommendations: Recom
       {/* Magic UI's animated list, growing downward so #1 stays on top */}
       <AnimatedList
         newestOnTop={false}
-        delay={prefersReducedMotion() ? 0 : REVEAL_DELAY}
+        delay={prefersReducedMotion() ? 0 : revealGap}
         className="gap-3"
       >
         {recommendations.map((rec, i) => (
