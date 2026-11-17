@@ -142,6 +142,12 @@ export default function App() {
     window.setTimeout(focusSearch, 50)   // once the home page is showing again
   }
 
+  // the walkthrough's example, for real: its results open on the home page
+  function tryFromHowItWorks(track: Track) {
+    setPage('home')
+    recommendFromTrack(track)
+  }
+
   function focusSearch() {
     window.scrollTo({ top: 0, behavior: scrollBehavior() })
     const input = document.getElementById('song-title') as HTMLInputElement | null
@@ -203,7 +209,7 @@ export default function App() {
 
       <StickySeedBar seed={stream.seed} visible={page === 'home' && started && searchOutOfView} onNewSearch={focusSearch} onHome={handleReset} />
 
-      {page === 'how' && <HowItWorksPage onStart={startFromHowItWorks} />}
+      {page === 'how' && <HowItWorksPage onStart={startFromHowItWorks} onTry={tryFromHowItWorks} />}
 
       {/* the home page stays mounted while How it works shows, so coming back
           is instant and any results are still there */}
