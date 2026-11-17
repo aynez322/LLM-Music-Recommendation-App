@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from api import audio
+from api import audio, http, results
 from api.models import Reason, Recommendation, RecommendRequest, Track
 from api.sources import deezer, lastfm, listenbrainz
 from api.text import normalize_artist, song_key
@@ -254,27 +254,45 @@ async def recommend(req: RecommendRequest) -> AsyncIterator[dict]:
     yield _event("seed", track=seed.model_dump())
     yield _stage("resolve", "done")
 
-    yield _stage("candidates", "start")
-    groups = await asyncio.gather(
-        _from_similar_tracks(seed), _from_similar_artists(seed), _from_seed_artist(seed)
-    )
-    cands = _merge(seed, list(groups))
+    # asked before (or pre-warmed from the chart): replay it
+    cached = results.get_result(seed.deezer_id, req.discovery, req.limit)
+    if cached is not None:
+        for event in cached:
+            yield event
+        return
+
+    misses = http.track_misses()   # sources that failed during this search
+    sent: list[dict] = []          # what to replay next time
+
+    def emit(event: dict) -> dict:
+        sent.append(event)
+        return event
+
+    yield emit(_stage("candidates", "start"))
+    cands = results.get_candidates(seed.deezer_id)
+    if cands is None:
+        groups = await asyncio.gather(
+            _from_similar_tracks(seed), _from_similar_artists(seed), _from_seed_artist(seed)
+        )
+        cands = _merge(seed, list(groups))
+        if cands:
+            results.put_candidates(seed.deezer_id, cands, degraded=bool(misses))
     if not cands:
         yield _event("error", message="No recommendations found for this song.", suggestions=[])
         return
-    yield _stage("candidates", "done", f"{len(cands)} candidates")
+    yield emit(_stage("candidates", "done", f"{len(cands)} candidates"))
 
-    yield _stage("listening", "start")
+    yield emit(_stage("listening", "start"))
     try:
         embs = await audio.embed([seed] + [c.track for c in cands])
     except Exception:   # never fail the request because of audio
         log.exception("audio embedding failed")
         embs = {}
     seed_emb = embs.get(seed.deezer_id)
-    yield _stage("listening", "done", f"{max(len(embs) - 1, 0)} previews analysed" if seed_emb is not None
-                 else "audio unavailable, using listener data only")
+    yield emit(_stage("listening", "done", f"{max(len(embs) - 1, 0)} previews analysed" if seed_emb is not None
+                      else "audio unavailable, using listener data only"))
 
-    yield _stage("ranking", "start")
+    yield emit(_stage("ranking", "start"))
     scored = _rank(cands, seed_emb, embs, req.discovery)
     picked = _diversify(scored, seed, req.limit)
     all_sims = [sim for _, _, sim in scored if sim is not None]
@@ -290,6 +308,10 @@ async def recommend(req: RecommendRequest) -> AsyncIterator[dict]:
             sound_similarity=None if sim is None else round(sim, 4),
             listener_score=round(c.listener, 4), reasons=reasons,
         ).model_dump())
-    yield _stage("ranking", "done")
-    yield _event("results", items=items)
-    yield _event("done")
+    yield emit(_stage("ranking", "done"))
+    yield emit(_event("results", items=items))
+    yield emit(_event("done"))
+
+    # without the audio model the ranking is listener data only: don't keep it
+    if seed_emb is not None:
+        results.put_result(seed.deezer_id, req.discovery, req.limit, sent, degraded=bool(misses))
