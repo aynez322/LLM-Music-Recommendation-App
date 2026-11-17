@@ -1,4 +1,4 @@
-import React, { useRef, type PropsWithChildren } from "react"
+import React, { createContext, useContext, useRef, type PropsWithChildren } from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import {
   motion,
@@ -30,6 +30,18 @@ const dockVariants = cva(
   "supports-backdrop-blur:bg-white/10 supports-backdrop-blur:dark:bg-black/10 mx-auto mt-8 flex h-[58px] w-max items-center justify-center gap-2 rounded-2xl border p-2 backdrop-blur-md"
 )
 
+// Local change (not in Magic UI): the dock hands its settings to its icons
+// through context, not by cloning its direct children, so a DockIcon still
+// magnifies when it sits inside something else (e.g. a link with a label).
+interface DockSettings {
+  mouseX: MotionValue<number>
+  size: number
+  magnification: number
+  disableMagnification: boolean
+  distance: number
+}
+const DockContext = createContext<DockSettings | null>(null)
+
 const Dock = React.forwardRef<HTMLDivElement, DockProps>(
   (
     {
@@ -46,25 +58,6 @@ const Dock = React.forwardRef<HTMLDivElement, DockProps>(
   ) => {
     const mouseX = useMotionValue(Infinity)
 
-    const renderChildren = () => {
-      return React.Children.map(children, (child) => {
-        if (
-          React.isValidElement<DockIconProps>(child) &&
-          child.type === DockIcon
-        ) {
-          return React.cloneElement(child, {
-            ...child.props,
-            mouseX: mouseX,
-            size: iconSize,
-            magnification: iconMagnification,
-            disableMagnification: disableMagnification,
-            distance: iconDistance,
-          })
-        }
-        return child
-      })
-    }
-
     return (
       <motion.div
         ref={ref}
@@ -77,7 +70,17 @@ const Dock = React.forwardRef<HTMLDivElement, DockProps>(
           "items-end": direction === "bottom",
         })}
       >
-        {renderChildren()}
+        <DockContext.Provider
+          value={{
+            mouseX,
+            size: iconSize,
+            magnification: iconMagnification,
+            disableMagnification,
+            distance: iconDistance,
+          }}
+        >
+          {children}
+        </DockContext.Provider>
       </motion.div>
     )
   }
@@ -100,15 +103,22 @@ export interface DockIconProps extends Omit<
 }
 
 const DockIcon = ({
-  size = DEFAULT_SIZE,
-  magnification = DEFAULT_MAGNIFICATION,
-  disableMagnification,
-  distance = DEFAULT_DISTANCE,
-  mouseX,
+  size: sizeProp,
+  magnification: magnificationProp,
+  disableMagnification: disableProp,
+  distance: distanceProp,
+  mouseX: mouseXProp,
   className,
   children,
   ...props
 }: DockIconProps) => {
+  // own props win, then the dock's settings, then the defaults
+  const dock = useContext(DockContext)
+  const size = sizeProp ?? dock?.size ?? DEFAULT_SIZE
+  const magnification = magnificationProp ?? dock?.magnification ?? DEFAULT_MAGNIFICATION
+  const disableMagnification = disableProp ?? dock?.disableMagnification ?? DEFAULT_DISABLEMAGNIFICATION
+  const distance = distanceProp ?? dock?.distance ?? DEFAULT_DISTANCE
+  const mouseX = mouseXProp ?? dock?.mouseX
   const ref = useRef<HTMLDivElement>(null)
   const padding = Math.max(6, size * 0.2)
   const defaultMouseX = useMotionValue(Infinity)

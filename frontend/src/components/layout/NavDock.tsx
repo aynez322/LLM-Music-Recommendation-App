@@ -12,10 +12,6 @@ interface NavDockProps {
   onToggleTheme: () => void
 }
 
-// one look for every item. The dock pads each icon with an inline style, so
-// items cover the whole circle absolutely: all of it is the click target.
-const item = 'absolute inset-0 flex items-center justify-center rounded-full text-text-secondary hover:text-accent hover:bg-bg-raised focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent transition-colors'
-
 function HomeIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="size-[52%]" aria-hidden>
@@ -35,15 +31,28 @@ function BookIcon() {
   )
 }
 
-// The label beside an icon: a second way to click the same link. It sits
-// outside the DockIcon (the dock only magnifies DockIcons), hugs its own icon
-// (-ml-1) and keeps a gap before the next one (mr-2). Screen readers already
-// get the name from the icon, so it is hidden from them; on phones the dock
-// would be too wide with text, so there it is icons only.
-const labelClass = 'hidden sm:block -ml-1 mr-2 text-sm font-medium hover:text-accent transition-colors whitespace-nowrap'
+// One look for every item: a pill holding the magnifying circle and its label,
+// all of it one link. The label shows from sm up; phones get icons only.
+const itemClass = 'flex items-center rounded-full text-text-secondary hover:text-accent hover:bg-bg-raised focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent transition-colors'
 
-function Label({ href, active, onNavigate, external, children }: {
-  href: string; active?: boolean; onNavigate?: () => void; external?: boolean; children: ReactNode
+/** The circle the dock magnifies; the icon inside grows with it. */
+function Glyph({ children, dot = false }: { children: ReactNode; dot?: boolean }) {
+  return (
+    <DockIcon className="relative flex-shrink-0">
+      <span className="absolute inset-0 flex items-center justify-center">{children}</span>
+      {/* the current page gets a dot underneath, as in the macOS dock */}
+      {dot && <span aria-hidden className="absolute bottom-[7%] left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-accent" />}
+    </DockIcon>
+  )
+}
+
+/**
+ * Icon and label as one link. Same-page links stay real <a>s (new tab, copy
+ * link) and navigate in place on a plain click; external ones open a new tab.
+ */
+function NavItem({ href, label, icon, active = false, onNavigate, external = false }: {
+  href: string; label: string; icon: ReactNode
+  active?: boolean; onNavigate?: () => void; external?: boolean
 }) {
   function onClick(e: MouseEvent<HTMLAnchorElement>) {
     if (!onNavigate || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
@@ -54,30 +63,13 @@ function Label({ href, active, onNavigate, external, children }: {
     <a
       href={href}
       onClick={onClick}
-      tabIndex={-1}
-      aria-hidden
+      aria-label={label}
+      aria-current={active ? 'page' : undefined}
       {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-      className={`${labelClass} ${active ? 'text-text-primary' : 'text-text-secondary'}`}
+      className={`${itemClass} ${active ? '!text-text-primary hover:!text-accent' : ''}`}
     >
-      {children}
-    </a>
-  )
-}
-
-/** Same-page link: a real <a> (new tab, copy link) that navigates in place on a plain click. */
-function PageLink({ href, label, active, onNavigate, children }: {
-  href: string; label: string; active: boolean; onNavigate: () => void; children: ReactNode
-}) {
-  function onClick(e: MouseEvent<HTMLAnchorElement>) {
-    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
-    e.preventDefault()
-    onNavigate()
-  }
-  return (
-    <a href={href} onClick={onClick} aria-label={label} title={label} aria-current={active ? 'page' : undefined} className={item}>
-      {children}
-      {/* the current page gets a dot underneath, as in the macOS dock */}
-      {active && <span aria-hidden className="absolute bottom-[7%] left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-accent" />}
+      <Glyph dot={active}>{icon}</Glyph>
+      <span aria-hidden className="hidden sm:inline -ml-0.5 pr-3.5 text-sm font-medium whitespace-nowrap">{label}</span>
     </a>
   )
 }
@@ -91,43 +83,32 @@ export function NavDock({ page, onHome, onHowItWorks, theme, onToggleTheme }: Na
         iconSize={40}
         iconMagnification={54}
         iconDistance={110}
-        className="mt-0 border-[var(--color-border)] bg-bg-surface/70 shadow-[0_8px_30px_rgba(0,0,0,0.25)]"
+        className="mt-0 gap-1 border-[var(--color-border)] bg-bg-surface/70 shadow-[0_8px_30px_rgba(0,0,0,0.25)]"
       >
-        <DockIcon className="relative">
-          <PageLink href={HOME_PATH} label="Home" active={page === 'home'} onNavigate={onHome}>
-            <HomeIcon />
-          </PageLink>
-        </DockIcon>
-        <Label href={HOME_PATH} active={page === 'home'} onNavigate={onHome}>Home</Label>
-        <DockIcon className="relative">
-          <PageLink href={HOW_PATH} label="How it works" active={page === 'how'} onNavigate={onHowItWorks}>
-            <BookIcon />
-          </PageLink>
-        </DockIcon>
-        <Label href={HOW_PATH} active={page === 'how'} onNavigate={onHowItWorks}>How it works</Label>
+        <NavItem href={HOME_PATH} label="Home" icon={<HomeIcon />} active={page === 'home'} onNavigate={onHome} />
+        <NavItem href={HOW_PATH} label="How it works" icon={<BookIcon />} active={page === 'how'} onNavigate={onHowItWorks} />
 
-        <div aria-hidden className="w-px self-stretch my-1.5 bg-[var(--color-border)]" />
+        <div aria-hidden className="w-px self-stretch my-1.5 mx-1 bg-[var(--color-border)]" />
 
-        {/* a flat list, not Fragments: the dock only magnifies its direct DockIcon children */}
-        {PROFILES.flatMap(({ name, href, path }) => [
-          <DockIcon key={name} className="relative">
-            <a href={href} target="_blank" rel="noopener noreferrer" aria-label={name} title={name} className={item}>
-              <svg viewBox="0 0 24 24" fill="currentColor" className="size-[46%]" aria-hidden><path d={path} /></svg>
-            </a>
-          </DockIcon>,
-          <Label key={`${name}-label`} href={href} external>{name}</Label>,
-        ])}
-        <DockIcon className="relative">
-          <button
-            type="button"
-            onClick={onToggleTheme}
-            aria-label={isLight ? 'Switch to dark mode' : 'Switch to light mode'}
-            title={isLight ? 'Dark mode' : 'Light mode'}
-            className={`${item} [&>svg]:size-[42%]`}
-          >
-            {isLight ? <MoonIcon /> : <SunIcon />}
-          </button>
-        </DockIcon>
+        {PROFILES.map(({ name, href, path }) => (
+          <NavItem
+            key={name}
+            href={href}
+            label={name}
+            external
+            icon={<svg viewBox="0 0 24 24" fill="currentColor" className="size-[46%]" aria-hidden><path d={path} /></svg>}
+          />
+        ))}
+
+        <button
+          type="button"
+          onClick={onToggleTheme}
+          aria-label={isLight ? 'Switch to dark mode' : 'Switch to light mode'}
+          title={isLight ? 'Dark mode' : 'Light mode'}
+          className={`${itemClass} [&_svg]:size-[42%]`}
+        >
+          <Glyph>{isLight ? <MoonIcon /> : <SunIcon />}</Glyph>
+        </button>
       </Dock>
     </nav>
   )
